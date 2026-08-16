@@ -53,17 +53,14 @@ jobs:
       id: release
       shell: bash
       run: |
-        TAG=$(curl -s "https://api.github.com/repos/rustdesk/rustdesk/releases/latest" | grep -o '"tag_name": *"[^"]*"' | head -1 | sed 's/"tag_name": *"\([^"]*\)"/\1/')
-        if [ -z "$TAG" ]; then
-          TAG="1.4.9"
-        fi
+        TAG=$(python3 -c "import urllib.request, json; resp=urllib.request.urlopen('https://api.github.com/repos/rustdesk/rustdesk/releases/latest'); data=json.loads(resp.read()); print(data.get('tag_name','1.4.9'))" 2>/dev/null || echo "1.4.9")
         echo "Latest Rust Desk release: $TAG"
-        echo "tag=$TAG" >> $GITHUB_ENV
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-    - name: Download Rust Desk client for Linux
+    - name: Download client for Linux
       if: startsWith(matrix.os, 'ubuntu')
       env:
-        TAG: ${{ env.tag }}
+        TAG: ${{ steps.release.outputs.tag }}
         ARCH: ${{ matrix.arch }}
         LABEL: ${{ matrix.label }}
         EXT: ${{ matrix.ext }}
@@ -84,10 +81,10 @@ jobs:
           fi
         fi
 
-    - name: Download Rust Desk client for Windows
+    - name: Download client for Windows
       if: startsWith(matrix.os, 'windows')
       env:
-        TAG: ${{ env.tag }}
+        TAG: ${{ steps.release.outputs.tag }}
         ARCH: ${{ matrix.arch }}
         LABEL: ${{ matrix.label }}
         EXT: ${{ matrix.ext }}
@@ -108,10 +105,10 @@ jobs:
           fi
         fi
 
-    - name: Download Rust Desk client for macOS
+    - name: Download client for macOS
       if: startsWith(matrix.os, 'macos')
       env:
-        TAG: ${{ env.tag }}
+        TAG: ${{ steps.release.outputs.tag }}
         ARCH: ${{ matrix.arch }}
         LABEL: ${{ matrix.label }}
         EXT: ${{ matrix.ext }}
