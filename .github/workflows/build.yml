@@ -57,14 +57,13 @@ jobs:
         if [ -z "$TAG" ]; then
           TAG="1.4.9"
         fi
-        echo "Using tag: $TAG"
         echo "Latest Rust Desk release: $TAG"
-        echo "tag=$TAG" >> $GITHUB_OUTPUT
+        echo "tag=$TAG" >> $GITHUB_ENV
 
     - name: Download Rust Desk client for Linux
-      if: matrix.os == 'ubuntu-22.04'
+      if: startsWith(matrix.os, 'ubuntu')
       env:
-        TAG: ${{ steps.release.outputs.tag }}
+        TAG: ${{ env.tag }}
         ARCH: ${{ matrix.arch }}
         LABEL: ${{ matrix.label }}
         EXT: ${{ matrix.ext }}
@@ -86,9 +85,9 @@ jobs:
         fi
 
     - name: Download Rust Desk client for Windows
-      if: matrix.os == 'windows-latest'
+      if: startsWith(matrix.os, 'windows')
       env:
-        TAG: ${{ steps.release.outputs.tag }}
+        TAG: ${{ env.tag }}
         ARCH: ${{ matrix.arch }}
         LABEL: ${{ matrix.label }}
         EXT: ${{ matrix.ext }}
@@ -110,9 +109,9 @@ jobs:
         fi
 
     - name: Download Rust Desk client for macOS
-      if: matrix.os == 'macos-*'
+      if: startsWith(matrix.os, 'macos')
       env:
-        TAG: ${{ steps.release.outputs.tag }}
+        TAG: ${{ env.tag }}
         ARCH: ${{ matrix.arch }}
         LABEL: ${{ matrix.label }}
         EXT: ${{ matrix.ext }}
@@ -120,17 +119,16 @@ jobs:
       run: |
         OUTPUT_FILE="rustdesk-wickedyoda-${LABEL}.${EXT}"
         
-        URLs=(
-          "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ARCH}.${EXT}"
-          "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${ARCH}.${EXT}"
-        )
-        
+        # Map arch names for asset URLs
+        ASSET_ARCH=$ARCH
         if [ "$ARCH" = "arm64" ]; then
-          URLs+=(
-            "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-aarch64.${EXT}"
-            "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-aarch64.${EXT}"
-          )
+          ASSET_ARCH="aarch64"
         fi
+        
+        URLs=(
+          "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ASSET_ARCH}.${EXT}"
+          "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${ASSET_ARCH}.${EXT}"
+        )
         
         for try_url in "${URLs[@]}"; do
           echo "Trying: $try_url"
@@ -182,8 +180,6 @@ jobs:
         run: |
           echo "=== Pre-built clients ==="
           ls -la clients/ 2>/dev/null || echo "No clients found"
-          echo ""
-          find clients/ -type f -exec ls -lh {} \; 2>/dev/null
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
