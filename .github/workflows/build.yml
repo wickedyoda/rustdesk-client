@@ -3,6 +3,8 @@ name: Build & Publish Client Packages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
   schedule:
     - cron: '0 0 * * 0'
@@ -118,13 +120,12 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Download all client artifacts
@@ -159,14 +160,12 @@ jobs:
           with open('SHA256SUMS', 'r') as f:
               checksums = f.read()
 
-          # Read README from repo root
           os.chdir('..')
           with open('README.md', 'r') as f:
               readme = f.read()
 
-          # Build new table
           lines = checksums.strip().split('\n')
-          table = "| Platform | File | SHA256 |\n|----------|------|--------|\n"
+          table = "| Platform | File | SHA256 (first 16 chars) |\n|----------|------|------------------------|\n"
           for line in lines:
               parts = line.split(None, 1)
               if len(parts) == 2:
@@ -174,25 +173,27 @@ jobs:
                   if 'AppImage' in filename:
                       platform = "Linux x86_64" if 'x86_64' in filename else "Linux aarch64"
                   elif 'exe' in filename:
-                      platform = "Windows"
+                      platform = "Windows x86_64"
                   elif 'dmg' in filename:
-                      platform = "macOS"
+                      platform = "macOS arm64"
                   else:
                       platform = filename
-                  short_hash = hash_val[:16] + "..."
+                  short_hash = hash_val[:16]
                   table += f"| {platform} | `{filename}` | `{short_hash}` |\n"
 
-          # Replace the table section
           new_readme = re.sub(
-              r'\| Platform \| File \| SHA256 \|.*?(?=### Verify Downloads)',
-              table + '\n',
+              r'\| Platform \| File \| SHA256.*?\n\|[-| ]+\|[-| ]+\|[-| ]+\|\n.*?\n.*?\n.*?\n.*?\n.*?\n.*?\n.*?### Verify Downloads',
+              table + '\n### Verify Downloads',
               readme,
               flags=re.DOTALL
           )
 
-          with open('README.md', 'w') as f:
-              f.write(new_readme)
-          print("README updated with checksums")
+          if new_readme == readme:
+              print("README pattern match failed, trying alternative")
+          else:
+              with open('README.md', 'w') as f:
+                  f.write(new_readme)
+              print("README updated with checksums")
           PYEOF
 
       - name: Determine next version
@@ -213,12 +214,12 @@ jobs:
       - name: Commit and push
         shell: bash
         run: |
+          rm -f clients/.gitkeep
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          rm -f clients/.gitkeep
           git add clients/ README.md
-          git commit -m "Add pre-built client packages and update checksums (build ${GITHUB_SHA::8})" || echo "No changes to commit"
-          git push || echo "Push failed - trying PR"
+          git commit -m "Update client packages and checksums (build ${GITHUB_SHA::8})" || echo "No changes to commit"
+          git push || echo "Push failed"
 
       - name: Create Release
         if: github.event_name == 'push'
