@@ -187,8 +187,8 @@ jobs:
                   table += f"| {platform} | `{filename}` | `{short_hash}` |\n"
 
           new_readme = re.sub(
-              r'\| Platform \| File \| SHA256.*?\n\|[-| ]+\|[-| ]+\|[-| ]+\|\n.*?\n.*?\n.*?\n.*?\n.*?\n.*?\n.*?### Verify Downloads',
-              table + '\n### Verify Downloads',
+              r'\| Platform \| File \| SHA256.*?\n\|[-| =]+\n.*?\n### Verify Downloads',
+              table + '### Verify Downloads',
               readme,
               flags=re.DOTALL
           )
