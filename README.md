@@ -18,11 +18,15 @@ curl -L https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/client
 Download `rustdesk-wickedyoda-windows-x86_64.exe` from the [`/clients/` directory](https://github.com/WickedYoda/rustdesk-client/tree/main/clients) and install with pre-configured settings.
 
 ### macOS
-Download `rustdesk-wickedyoda-macos-aarch64.dmg` from the [`/clients/` directory](https://github.com/WickedYoda/rustdesk-client/tree/main/clients):
+Download the appropriate DMG from the [`/clients/` directory](https://github.com/WickedYoda/rustdesk-client/tree/main/clients):
 
 ```bash
-# Download and mount
+# Apple Silicon (arm64)
 curl -L https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/rustdesk-wickedyoda-macos-aarch64.dmg -o rustdesk.dmg
+open rustdesk.dmg
+
+# Intel (x86_64)
+curl -L https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/rustdesk-wickedyoda-macos-x86_64.dmg -o rustdesk.dmg
 open rustdesk.dmg
 ```
 
@@ -35,14 +39,15 @@ All pre-built clients are available in the [`/clients/` directory](https://githu
 | Linux x86_64 | `rustdesk-wickedyoda-linux-x86_64.AppImage` | `7902cd60a4f29817` |
 | Linux aarch64 | `rustdesk-wickedyoda-linux-aarch64.AppImage` | `a955a100d9c83ec7` |
 | Windows x86_64 | `rustdesk-wickedyoda-windows-x86_64.exe` | `eaedeb0088e687bf` |
-| macOS arm64 | `rustdesk-wickedyoda-macos-aarch64.dmg` | `f7935597b247d42c` |
+| macOS arm64 (Apple Silicon) | `rustdesk-wickedyoda-macos-aarch64.dmg` | `f7935597b247d42c` |
+| macOS x86_64 (Intel) | `rustdesk-wickedyoda-macos-x86_64.dmg` | Auto-generated |
 
 ### Verify Downloads
 
 ```bash
 # Download the checksums file and a client
 curl -L https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/SHA256SUMS -o SHA256SUMS
-curl -L https://raw.githubusercontent.com/Wickyoda/rustdesk-client/main/clients/rustdesk-wickedyoda-linux-x86_64.AppImage -o rustdesk-wickedyoda-linux-x86_64.AppImage
+curl -L https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/rustdesk-wickedyoda-linux-x86_64.AppImage -o rustdesk-wickedyoda-linux-x86_64.AppImage
 
 # Verify the hash
 sha256sum -c SHA256SUMS --ignore-missing
