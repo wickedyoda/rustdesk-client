@@ -1,0 +1,18 @@
+{
+  "host": "rd.wickedyoda.com",
+  "port": 21115,
+  "key": "vBWa4z9UmOgwMeuvDwzwE05+S8K4U6UBrr3nlENUa6A=",
+  "relay_server": "rd.wickedyoda.com:21116",
+  "api_server": "rd.wickedyoda.com:21117",
+  "is_relay_connection": false,
+  "connect_to_rendezvous_server": true,
+  "rendezvous_server": "rd.wickedyoda.com:21116",
+  "rendezvous_id": "rd.wickedyoda.com:21115",
+  "preferred_websocket_port": 21118,
+  "server_relay": true,
+  "server_futures": true,
+  "render_quality": 6,
+  "custom_rate_value": 20,
+  "is_custom_rate_selected": false,
+  "use_smtp": false
+}

@@ -1,0 +1,63 @@
+name: Build Rust Desk Client Packages
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platform: [linux-x86_64, linux-aarch64, windows-x86_64, macos-x86_64, macos-aarch64]
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    - name: Create output directory
+      run: mkdir -p dist
+    
+    - name: Copy configuration
+      run: cp local.json dist/local.json
+    
+    - name: Build Linux x86_64
+      if: matrix.platform == 'linux-x86_64'
+      run: |
+        curl -L "https://github.com/rustdesk/rustdesk/releases/latest/download/rustdesk-x86_64.AppImage" -o dist/rustdesk-wickedyoda-linux-x86_64.AppImage
+        chmod +x dist/rustdesk-wickedyoda-linux-x86_64.AppImage
+    
+    - name: Build Linux aarch64
+      if: matrix.platform == 'linux-aarch64'
+      run: |
+        curl -L "https://github.com/rustdesk/rustdesk/releases/latest/download/rustdesk-aarch64.AppImage" -o dist/rustdesk-wickedyoda-linux-aarch64.AppImage
+        chmod +x dist/rustdesk-wickedyoda-linux-aarch64.AppImage
+    
+    - name: Build Windows x86_64
+      if: matrix.platform == 'windows-x86_64'
+      run: |
+        curl -L "https://github.com/rustdesk/rustdesk/releases/latest/download/rustdesk-2.0.0-x86_64.exe" -o dist/rustdesk-wickedyoda-windows-x86_64.exe
+    
+    - name: Build macOS x86_64
+      if: matrix.platform == 'macos-x86_64'
+      run: |
+        curl -L "https://github.com/rustdesk/rustdesk/releases/latest/download/rustdesk-2.0.0-x86_64.dmg" -o dist/rustdesk-wickedyoda-macos-x86_64.dmg
+    
+    - name: Build macOS aarch64
+      if: matrix.platform == 'macos-aarch64'
+      run: |
+        curl -L "https://github.com/rustdesk/rustdesk/releases/latest/download/rustdesk-2.0.0-aarch64.dmg" -o dist/rustdesk-wickedyoda-macos-aarch64.dmg
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: rustdesk-client-${{ matrix.platform }}
+        path: dist/
