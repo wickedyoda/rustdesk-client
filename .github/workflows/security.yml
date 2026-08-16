@@ -35,7 +35,6 @@ jobs:
       with:
         languages: ${{ matrix.language }}
         queries: security-and-quality,security-extended
-        exclude-rules: "client-exe,client-dll"
 
     - name: Autobuild
       uses: github/codeql-action/autobuild@v4
@@ -94,17 +93,21 @@ jobs:
       uses: gitleaks/gitleaks-action@v3
       with:
         config: .gitleaks.toml
-        report_format: "sarif"
-        report_path: "gitleaks.sarif"
+        report_format: "json"
+        report_path: "gitleaks-report.json"
         exit_codes: "0"
         path: "."
         exclude_paths: "clients/"
 
     - name: Upload Gitleaks results
-      uses: github/codeql-action/upload-sarif@v3
       if: always()
-      with:
-        sarif_file: "gitleaks.sarif"
+      run: |
+        if [ -f gitleaks-report.json ] && [ -s gitleaks-report.json ]; then
+          echo "Gitleaks findings:"
+          cat gitleaks-report.json | python3 -m json.tool 2>/dev/null || cat gitleaks-report.json
+        else
+          echo "No secrets detected"
+        fi
 
   script-security-audit:
     name: Script Security Audit
