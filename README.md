@@ -32,10 +32,10 @@ All pre-built clients are available in the [`/clients/` directory](https://githu
 
 | Platform | File | SHA256 |
 |----------|------|--------|
-| Linux x86_64 | `rustdesk-wickedyoda-linux-x86_64.AppImage` | See [`/clients/SHA256SUMS`](https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/SHA256SUMS) |
-| Linux aarch64 | `rustdesk-wickedyoda-linux-aarch64.AppImage` | See [`/clients/SHA256SUMS`](https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/SHA256SUMS) |
-| Windows x86_64 | `rustdesk-wickedyoda-windows-x86_64.exe` | See [`/clients/SHA256SUMS`](https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/SHA256SUMS) |
-| macOS arm64 | `rustdesk-wickedyoda-macos-aarch64.dmg` | See [`/clients/SHA256SUMS`](https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/SHA256SUMS) |
+| Linux aarch64 | `rustdesk-wickedyoda-linux-aarch64.AppImage` | `a955a100d9c83ec7...` |
+| Linux x86_64 | `rustdesk-wickedyoda-linux-x86_64.AppImage` | `7902cd60a4f29817...` |
+| macOS | `rustdesk-wickedyoda-macos-aarch64.dmg` | `f7935597b247d42c...` |
+| Windows | `rustdesk-wickedyoda-windows-x86_64.exe` | `eaedeb0088e687bf...` |
 
 ### Verify Downloads
 
