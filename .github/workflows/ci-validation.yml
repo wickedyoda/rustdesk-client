@@ -16,54 +16,64 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v7
-    
+      with:
+        fetch-depth: 0
+
     - name: JSON Validation
       run: |
         echo "Validating local.json..."
         python3 -c "import json; json.load(open('local.json'))"
         echo "✅ JSON validation passed"
-    
+
     - name: YAML Validation
       run: |
         echo "Validating workflow files..."
         find .github/workflows -name "*.yml" -o -name "*.yaml" | while read file; do
           python3 -c "import yaml; yaml.safe_load(open('$file'))" && echo "✅ $file" || echo "❌ $file"
         done
-    
+
     - name: Shell Script Syntax Check
       run: |
         echo "Checking Bash scripts..."
         bash -n scripts/install-linux.sh && echo "✅ install-linux.sh"
         bash -n scripts/install-macos.sh && echo "✅ install-macos.sh"
-    
-    - name: PowerShell Script Validation
-      uses: powershell/setup-pwsh@v1
-      steps:
-      - uses: actions/checkout@v7
-      - name: Check PowerShell script
-        run: |
-          pwsh -Command "if (Test-Path scripts/setup-windows.ps1) { Write-Output '✅ setup-windows.ps1 exists' } else { Write-Error '❌ PowerShell script missing' }"
+
+    - name: PowerShell Script Check
+      shell: pwsh
+      run: |
+        if (Test-Path scripts/setup-windows.ps1) {
+          Write-Output "✅ setup-windows.ps1 exists"
+          $content = Get-Content scripts/setup-windows.ps1 -Raw
+          if ([string]::IsNullOrWhiteSpace($content)) {
+            throw "❌ PowerShell script is empty"
+          }
+          Write-Output "✅ PowerShell script has content"
+        } else {
+          throw "❌ PowerShell script missing"
+        }
 
   lint:
     name: Code Linting
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v7
-    
+      with:
+        fetch-depth: 0
+
     - name: ShellCheck
       uses: ludeeus/action-shellcheck@master
       with:
         scripts: |
           scripts/install-linux.sh
           scripts/install-macos.sh
-    
+
     - name: Prettier Check (Markdown)
       uses: prettier/prettier-action@v4
       with:
         files: "**/*.md"
         checkonly: true
         more_args: --no-semi --print-width 100
-    
+
     - name: Yamllint
       run: |
         pip install yamllint

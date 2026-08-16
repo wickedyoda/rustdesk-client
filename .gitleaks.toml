@@ -1,0 +1,3 @@
+[green]
+description = "Ignore Rust Desk client binaries"
+path = "clients/"
