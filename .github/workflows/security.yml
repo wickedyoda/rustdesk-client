@@ -16,27 +16,27 @@ jobs:
       security-events: write
       contents: read
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v7
-      with:
-        fetch-depth: 1
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
 
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        scan-type: "fs"
-        security-checks: "vuln,config"
-        ignore-unfixed: true
-        format: "sarif"
-        output: "trivy-results.sarif"
-        skip-dirs: "clients"
-        exit-code: 0
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          security-checks: "vuln,config"
+          ignore-unfixed: true
+          format: "sarif"
+          output: "trivy-results.sarif"
+          skip-dirs: "clients"
+          exit-code: 0
 
-    - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v3
-      if: always()
-      with:
-        sarif_file: "trivy-results.sarif"
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: "trivy-results.sarif"
 
   secrets-detection:
     name: Secrets Detection
@@ -45,42 +45,42 @@ jobs:
       contents: read
       security-events: write
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v7
-      with:
-        fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
-    - name: Gitleaks (Detect Secrets)
-      uses: gitleaks/gitleaks-action@v3
-      with:
-        config: .gitleaks.toml
-        report_format: "json"
-        report_path: "gitleaks-report.json"
-        exit_codes: "0"
+      - name: Gitleaks (Detect Secrets)
+        uses: gitleaks/gitleaks-action@v3
+        with:
+          config: .gitleaks.toml
+          report_format: "json"
+          report_path: "gitleaks-report.json"
+          exit_codes: "0"
 
-    - name: Upload Gitleaks results
-      if: always()
-      run: |
-        if [ -f gitleaks-report.json ] && [ -s gitleaks-report.json ]; then
-          echo "Gitleaks findings:"
-          cat gitleaks-report.json | python3 -m json.tool 2>/dev/null || cat gitleaks-report.json
-        else
-          echo "No secrets detected"
-        fi
+      - name: Report Gitleaks findings
+        if: always()
+        run: |
+          if [ -f gitleaks-report.json ] && [ -s gitleaks-report.json ]; then
+            echo "Gitleaks findings:"
+            cat gitleaks-report.json | python3 -m json.tool 2>/dev/null || cat gitleaks-report.json
+          else
+            echo "No secrets detected"
+          fi
 
   script-security-audit:
     name: Script Security Audit
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v7
-      with:
-        fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
-    - name: Install shellcheck
-      run: sudo apt-get install -y shellcheck
+      - name: Install shellcheck
+        run: sudo apt-get install -y shellcheck
 
-    - name: Audit shell scripts
-      run: |
-        shellcheck scripts/install-linux.sh || echo "Warnings found"
-        shellcheck scripts/install-macos.sh || echo "Warnings found"
+      - name: Audit shell scripts
+        run: |
+          shellcheck scripts/install-linux.sh || echo "Warnings found"
+          shellcheck scripts/install-macos.sh || echo "Warnings found"
