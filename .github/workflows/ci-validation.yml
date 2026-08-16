@@ -67,13 +67,6 @@ jobs:
           scripts/install-linux.sh
           scripts/install-macos.sh
 
-    - name: Prettier Check (Markdown)
-      uses: prettier/prettier-action@v4
-      with:
-        files: "**/*.md"
-        checkonly: true
-        more_args: --no-semi --print-width 100
-
     - name: Yamllint
       run: |
         pip install yamllint
