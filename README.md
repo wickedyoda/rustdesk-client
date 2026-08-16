@@ -30,12 +30,23 @@ open rustdesk.dmg
 
 All pre-built clients are available in the [`/clients/` directory](https://github.com/WickedYoda/rustdesk-client/tree/main/clients):
 
-| Platform | File |
-|----------|------|
-| Linux x86_64 | `rustdesk-wickedyoda-linux-x86_64.AppImage` |
-| Linux aarch64 | `rustdesk-wickedyoda-linux-aarch64.AppImage` |
-| Windows x86_64 | `rustdesk-wickedyoda-windows-x86_64.exe` |
-| macOS arm64 | `rustdesk-wickedyoda-macos-aarch64.dmg` |
+| Platform | File | SHA256 |
+|----------|------|--------|
+| Linux x86_64 | `rustdesk-wickedyoda-linux-x86_64.AppImage` | See `/clients/SHA256SUMS` |
+| Linux aarch64 | `rustdesk-wickedyoda-linux-aarch64.AppImage` | See `/clients/SHA256SUMS` |
+| Windows x86_64 | `rustdesk-wickedyoda-windows-x86_64.exe` | See `/clients/SHA256SUMS` |
+| macOS arm64 | `rustdesk-wickedyoda-macos-aarch64.dmg` | See `/clients/SHA256SUMS` |
+
+### Verify Downloads
+
+```bash
+# Download and verify
+curl -L https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/rustdesk-wickedyoda-linux-x86_64.AppImage -o rustdesk
+curl -L https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/SHA256SUMS -o SHA256SUMS
+
+# Verify the hash
+sha256sum -c SHA256SUMS --ignore-missing
+```
 
 ## Server Details
 
@@ -57,5 +68,5 @@ All pre-built clients are available in the [`/clients/` directory](https://githu
 This repository uses GitHub Actions to automatically build and publish client packages:
 
 - **Build**: Pre-built clients are published to `/clients/` on every push to `main`
-- **CI Validation**: Code quality checks (yambl, shellcheck)
+- **CI Validation**: Code quality checks (yamllint, shellcheck)
 - **Security Scan**: Trivy vulnerability scanning, Gitleaks secrets detection

@@ -151,6 +151,76 @@ jobs:
           done
           ls -la clients/
 
+      - name: Generate SHA256 checksums
+        shell: bash
+        run: |
+          cd clients
+          sha256sum *.AppImage *.exe *.dmg 2>/dev/null | sort -k2 > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Update README with checksums
+        shell: bash
+        run: |
+          cd clients
+          # Generate checksum table rows
+          CHECKSUM_ROWS=""
+          for file in *.AppImage *.exe *.dmg; do
+            if [ -f "$file" ]; then
+              HASH=$(sha256sum "$file" | awk '{print $1}')
+              case "$file" in
+                *.AppImage) PLATFORM="Linux AppImage" ;;
+                *.exe) PLATFORM="Windows x86_64" ;;
+                *.dmg) PLATFORM="macOS arm64" ;;
+                *) PLATFORM="$file" ;;
+              esac
+              CHECKSUM_ROWS="${CHECKSUM_ROWS}|$PLATFORM|$file|See \`SHA256SUMS\`|\n"
+            fi
+          done
+
+          # Update README.md in the repo root
+          cd ..
+          # Replace content between the table header and the closing
+          python3 << 'PYEOF'
+          import re
+
+          with open('clients/SHA256SUMS', 'r') as f:
+              checksums = f.read()
+
+          # Read README
+          with open('README.md', 'r') as f:
+              readme = f.read()
+
+          # Build new table
+          lines = checksums.strip().split('\n')
+          table = "| Platform | File | SHA256 |\n|----------|------|--------|\n"
+          for line in lines:
+              parts = line.split(None, 1)
+              if len(parts) == 2:
+                  hash_val, filename = parts
+                  if 'AppImage' in filename:
+                      platform = "Linux" if 'x86_64' in filename else "Linux ARM"
+                  elif 'exe' in filename:
+                      platform = "Windows"
+                  elif 'dmg' in filename:
+                      platform = "macOS"
+                  else:
+                      platform = filename
+                  short_hash = hash_val[:16] + "..."
+                  table += f"| {platform} | `{filename}` | `{short_hash}` |\n"
+
+          # Replace the table section
+          new_readme = re.sub(
+              r'\| Platform \| File \| SHA256 \|.*?(?=## Server Details)',
+              table + '\n',
+              readme,
+              flags=re.DOTALL
+          )
+
+          with open('README.md', 'w') as f:
+              f.write(new_readme)
+          print("README updated with checksums")
+          PYEOF
+
       - name: Determine next version
         id: version
         shell: bash
@@ -172,7 +242,7 @@ jobs:
           rm -f clients/.gitkeep
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add clients/
+          git add clients/ README.md
           git commit -m "Add pre-built client packages via CI" || echo "No changes"
           git push || echo "Push may need PR due to branch protection"
 
