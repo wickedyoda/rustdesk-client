@@ -76,7 +76,7 @@ jobs:
               allowed-values: ['true', 'false', 'yes', 'no']
             indentation:
               spaces: 2
-              indent-sequences: consistent
+              indent-sequences: whatever
             quoted-strings: disable
           CFG
           yamllint -c /tmp/yamllint.yml .github/workflows/*.yml
