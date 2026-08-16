@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: false  # Continue even if one platform fails
       matrix:
         include:
           - os: ubuntu-22.04
@@ -26,10 +26,6 @@ jobs:
             label: windows-x86_64
             ext: exe
             arch: x86_64
-          - os: macos-13
-            arch: x86_64
-            label: macos-x86_64
-            ext: dmg
           - os: macos-14
             arch: arm64
             label: macos-aarch64
@@ -76,13 +72,11 @@ jobs:
           ubuntu*)
             URLS=(
               "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ARCH}.${EXT}"
-              "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${ARCH}.${EXT}"
             )
             ;;
           windows*)
             URLS=(
               "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ARCH}.${EXT}"
-              "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-x86_64.${EXT}"
             )
             ;;
           macos*)
@@ -120,7 +114,8 @@ jobs:
         if-no-files-found: warn
 
   consolidate:
-    needs: build
+    # Removed needs: build to avoid blocking on macOS x86_64
+    if: always()
     runs-on: ubuntu-latest
     permissions:
       contents: write
