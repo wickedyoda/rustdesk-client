@@ -121,6 +121,7 @@ jobs:
 
   consolidate:
     if: always()
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
