@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false  # Continue even if one platform fails
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-22.04
@@ -32,94 +32,103 @@ jobs:
             ext: dmg
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v7
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Create directories
-      shell: bash
-      run: mkdir -p clients dist
+      - name: Create directories
+        shell: bash
+        run: mkdir -p clients dist
 
-    - name: Copy configuration
-      shell: bash
-      run: cp local.json dist/local.json
+      - name: Copy configuration
+        shell: bash
+        run: cp local.json dist/local.json
 
-    - name: Get latest Rust Desk release tag
-      id: release
-      shell: bash
-      run: |
-        TAG=$(python3 -c "import urllib.request, json; resp=urllib.request.urlopen('https://api.github.com/repos/rustdesk/rustdesk/releases/latest'); data=json.loads(resp.read()); print(data.get('tag_name','1.4.9'))" 2>/dev/null || echo "1.4.9")
-        echo "Latest Rust Desk release: $TAG"
-        echo "tag=$TAG" >> $GITHUB_OUTPUT
+      - name: Get latest Rust Desk release tag
+        id: release
+        shell: bash
+        run: |
+          TAG=$(python3 -c "import urllib.request, json; resp=urllib.request.urlopen('https://api.github.com/repos/rustdesk/rustdesk/releases/latest'); data=json.loads(resp.read()); print(data.get('tag_name','1.4.9'))" 2>/dev/null || echo "1.4.9")
+          echo "Latest Rust Desk release: $TAG"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-    - name: Download Rust Desk client
-      env:
-        TAG: ${{ steps.release.outputs.tag }}
-        ARCH: ${{ matrix.arch }}
-        LABEL: ${{ matrix.label }}
-        EXT: ${{ matrix.ext }}
-        OS_FAMILY: ${{ matrix.os }}
-      shell: bash
-      run: |
-        OUTPUT_FILE="rustdesk-wickedyoda-${LABEL}.${EXT}"
-        ASSET_ARCH=$ARCH
-        if [ "$ARCH" = "arm64" ]; then
-          ASSET_ARCH="aarch64"
-        fi
-
-        case "$OS_FAMILY" in
-          ubuntu*)
-            URLS=(
-              "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ARCH}.${EXT}"
-            )
-            ;;
-          windows*)
-            URLS=(
-              "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ARCH}.${EXT}"
-            )
-            ;;
-          macos*)
-            URLS=(
-              "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ASSET_ARCH}.${EXT}"
-              "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${ASSET_ARCH}.${EXT}"
-            )
-            ;;
-        esac
-
-        for try_url in "${URLS[@]}"; do
-          echo "Trying: $try_url"
-          if curl -sfL "$try_url" -o "dist/$OUTPUT_FILE"; then
-            FILESIZE=$(wc -c < "dist/$OUTPUT_FILE" | tr -d ' ')
-            if [ "$FILESIZE" -gt 1000 ]; then
-              echo "Downloaded: $try_url ($FILESIZE bytes)"
-              cp "dist/$OUTPUT_FILE" "clients/$OUTPUT_FILE"
-              break
-            else
-              echo "::warning::File too small: $try_url"
-              rm -f "dist/$OUTPUT_FILE"
-            fi
+      - name: Download Rust Desk client
+        env:
+          TAG: ${{ steps.release.outputs.tag }}
+          ARCH: ${{ matrix.arch }}
+          LABEL: ${{ matrix.label }}
+          EXT: ${{ matrix.ext }}
+          OS_FAMILY: ${{ matrix.os }}
+        shell: bash
+        run: |
+          OUTPUT_FILE="rustdesk-wickedyoda-${LABEL}.${EXT}"
+          ASSET_ARCH=$ARCH
+          if [ "$ARCH" = "arm64" ]; then
+            ASSET_ARCH="aarch64"
           fi
-        done
 
-        if [ ! -f "clients/$OUTPUT_FILE" ]; then
-          echo "::warning::Failed to download for $LABEL"
-        fi
+          case "$OS_FAMILY" in
+            ubuntu*)
+              URLS=(
+                "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ARCH}.${EXT}"
+              )
+              ;;
+            windows*)
+              URLS=(
+                "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ARCH}.${EXT}"
+              )
+              ;;
+            macos*)
+              URLS=(
+                "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ASSET_ARCH}.${EXT}"
+                "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${ASSET_ARCH}.${EXT}"
+              )
+              ;;
+          esac
 
-    - name: Upload client artifact
-      uses: actions/upload-artifact@v7
-      with:
-        name: client-${{ matrix.label }}
-        path: clients/
-        if-no-files-found: warn
+          for try_url in "${URLS[@]}"; do
+            echo "Trying: $try_url"
+            if curl -sfL "$try_url" -o "dist/$OUTPUT_FILE"; then
+              FILESIZE=$(wc -c < "dist/$OUTPUT_FILE" | tr -d ' ')
+              if [ "$FILESIZE" -gt 1000 ]; then
+                echo "Downloaded: $try_url ($FILESIZE bytes)"
+                cp "dist/$OUTPUT_FILE" "clients/$OUTPUT_FILE"
+                break
+              else
+                echo "::warning::File too small: $try_url"
+                rm -f "dist/$OUTPUT_FILE"
+              fi
+            fi
+          done
+
+          if [ ! -f "clients/$OUTPUT_FILE" ]; then
+            echo "::warning::Failed to download for $LABEL"
+          fi
+
+      - name: Upload client artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: client-${{ matrix.label }}
+          path: clients/
+          if-no-files-found: warn
+
+      - name: Commit client binary
+        if: github.event_name != 'schedule' || matrix.label == 'linux-x86_64'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add clients/
+          git commit -m "Update pre-built client: ${{ matrix.label }} (build ${GITHUB_SHA::8})" || echo "No changes to commit"
+          git push origin HEAD:${{ github.ref }} || echo "Nothing to push"
 
   consolidate:
-    # Removed needs: build to avoid blocking on macOS x86_64
     if: always()
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v7

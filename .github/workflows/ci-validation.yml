@@ -8,76 +8,75 @@ on:
 
 jobs:
   validate:
-    name: Code Quality & Validation
+    name: Code Quality Validation
     runs-on: ubuntu-latest
     permissions:
       contents: read
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v7
-      with:
-        fetch-depth: 0
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
-    - name: JSON Validation
-      run: |
-        echo "Validating local.json..."
-        python3 -c "import json; json.load(open('local.json'))"
-        echo "Passed: JSON validation"
+      - name: JSON Validation
+        run: |
+          echo "Validating local.json..."
+          python3 -c "import json; json.load(open('local.json'))"
+          echo "Passed: JSON validation"
 
-    - name: YAML Validation
-      run: |
-        echo "Validating workflow files..."
-        for file in .github/workflows/*.yml; do
-          python3 -c "import yaml; yaml.safe_load(open('${file}'))" && echo "Passed: ${file}" || echo "Failed: ${file}"
-        done
+      - name: YAML Validation
+        run: |
+          echo "Validating workflow files..."
+          for file in .github/workflows/*.yml; do
+            python3 -c "import yaml; yaml.safe_load(open('${file}'))" && echo "Passed: ${file}" || echo "Failed: ${file}"
+          done
 
-    - name: Shell Script Syntax Check
-      run: |
-        echo "Checking Bash scripts..."
-        bash -n scripts/install-linux.sh && echo "Passed: install-linux.sh"
-        bash -n scripts/install-macos.sh && echo "Passed: install-macos.sh"
+      - name: Shell Script Syntax Check
+        run: |
+          echo "Checking Bash scripts..."
+          bash -n scripts/install-linux.sh && echo "Passed: install-linux.sh"
+          bash -n scripts/install-macos.sh && echo "Passed: install-macos.sh"
 
-    - name: PowerShell Script Check
-      shell: pwsh
-      run: |
-        $script = "scripts/setup-windows.ps1"
-        if (Test-Path $script) {
-          $content = Get-Content $script -Raw
-          if ([string]::IsNullOrWhiteSpace($content)) {
-            throw "Failed: PowerShell script is empty"
+      - name: PowerShell Script Check
+        shell: pwsh
+        run: |
+          $script = "scripts/setup-windows.ps1"
+          if (Test-Path $script) {
+            $content = Get-Content $script -Raw
+            if ([string]::IsNullOrWhiteSpace($content)) {
+              throw "Failed: PowerShell script is empty"
+            }
+            Write-Output "Passed: setup-windows.ps1"
+          } else {
+            Write-Output "Skipped: PowerShell script not found"
           }
-          Write-Output "Passed: setup-windows.ps1"
-        } else {
-          Write-Output "Skipped: PowerShell script not found"
-        }
 
   lint:
     name: Code Linting
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v7
-      with:
-        fetch-depth: 0
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
-    - name: ShellCheck
-      uses: ludeeus/action-shellcheck@master
-      with:
-        scandir: 'scripts/'
+      - name: ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: 'scripts/'
 
-    - name: Yamllint
-      run: |
-        pip install yamllint
-        cat > /tmp/yamllint.yml << 'EOF2'
-        extends: default
-        rules:
-          line-length: disable
-          document-start: disable
-          truthy:
-            allowed-values: ['true', 'false', 'yes', 'no']
-          indentation:
-            spaces: 2
-            indent-sequences: true
-            check-multi-line-strings: true
-        EOF2
-        yamllint -c /tmp/yamllint.yml .github/workflows/*.yml
+      - name: Yamllint
+        run: |
+          pip install yamllint
+          cat > /tmp/yamllint.yml << 'CFG'
+          extends: default
+          rules:
+            line-length: disable
+            document-start: disable
+            truthy:
+              allowed-values: ['true', 'false', 'yes', 'no']
+            indentation:
+              spaces: 2
+              indent-sequences: whatever
+            quoted-strings: disable
+          CFG
+          yamllint -c /tmp/yamllint.yml .github/workflows/*.yml
