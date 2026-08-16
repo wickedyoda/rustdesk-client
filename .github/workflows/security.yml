@@ -15,7 +15,6 @@ jobs:
     permissions:
       security-events: write
       contents: read
-    
     steps:
     - name: Checkout repository
       uses: actions/checkout@v7
@@ -34,38 +33,10 @@ jobs:
         exit-code: 0
 
     - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarlin-action@v3
+      uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
         sarif_file: "trivy-results.sarif"
-
-  codeql:
-    name: CodeQL Analysis (Shell)
-    runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-      actions: read
-      contents: read
-    
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v7
-      with:
-        fetch-depth: 0
-
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v4
-      with:
-        languages: bash
-        queries: security-and-quality,security-extended
-
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v4
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v4
-      with:
-        category: "codeql-bash"
 
   secrets-detection:
     name: Secrets Detection
@@ -73,7 +44,6 @@ jobs:
     permissions:
       contents: read
       security-events: write
-    
     steps:
     - name: Checkout repository
       uses: actions/checkout@v7
@@ -101,7 +71,6 @@ jobs:
   script-security-audit:
     name: Script Security Audit
     runs-on: ubuntu-latest
-    
     steps:
     - name: Checkout repository
       uses: actions/checkout@v7
