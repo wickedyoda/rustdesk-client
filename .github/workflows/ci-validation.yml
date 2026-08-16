@@ -15,7 +15,7 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
     
     - name: JSON Validation
       run: |
@@ -39,7 +39,7 @@ jobs:
     - name: PowerShell Script Validation
       uses: powershell/setup-pwsh@v1
       steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Check PowerShell script
         run: |
           pwsh -Command "if (Test-Path scripts/setup-windows.ps1) { Write-Output '✅ setup-windows.ps1 exists' } else { Write-Error '❌ PowerShell script missing' }"
@@ -48,7 +48,7 @@ jobs:
     name: Code Linting
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     
     - name: ShellCheck
       uses: ludeeus/action-shellcheck@master
