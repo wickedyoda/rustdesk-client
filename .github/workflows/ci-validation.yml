@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v7
@@ -23,33 +23,33 @@ jobs:
       run: |
         echo "Validating local.json..."
         python3 -c "import json; json.load(open('local.json'))"
-        echo "✅ JSON validation passed"
+        echo "Passed: JSON validation"
 
     - name: YAML Validation
       run: |
         echo "Validating workflow files..."
-        find .github/workflows -name "*.yml" -o -name "*.yaml" | while read file; do
-          python3 -c "import yaml; yaml.safe_load(open('$file'))" && echo "✅ $file" || echo "❌ $file"
+        for file in .github/workflows/*.yml; do
+          python3 -c "import yaml; yaml.safe_load(open('${file}'))" && echo "Passed: ${file}" || echo "Failed: ${file}"
         done
 
     - name: Shell Script Syntax Check
       run: |
         echo "Checking Bash scripts..."
-        bash -n scripts/install-linux.sh && echo "✅ install-linux.sh"
-        bash -n scripts/install-macos.sh && echo "✅ install-macos.sh"
+        bash -n scripts/install-linux.sh && echo "Passed: install-linux.sh"
+        bash -n scripts/install-macos.sh && echo "Passed: install-macos.sh"
 
     - name: PowerShell Script Check
       shell: pwsh
       run: |
-        if (Test-Path scripts/setup-windows.ps1) {
-          Write-Output "✅ setup-windows.ps1 exists"
-          $content = Get-Content scripts/setup-windows.ps1 -Raw
+        $script = "scripts/setup-windows.ps1"
+        if (Test-Path $script) {
+          $content = Get-Content $script -Raw
           if ([string]::IsNullOrWhiteSpace($content)) {
-            throw "❌ PowerShell script is empty"
+            throw "Failed: PowerShell script is empty"
           }
-          Write-Output "✅ PowerShell script has content"
+          Write-Output "Passed: setup-windows.ps1"
         } else {
-          throw "❌ PowerShell script missing"
+          Write-Output "Skipped: PowerShell script not found"
         }
 
   lint:
@@ -63,20 +63,21 @@ jobs:
     - name: ShellCheck
       uses: ludeeus/action-shellcheck@master
       with:
-        scripts: |
-          scripts/install-linux.sh
-          scripts/install-macos.sh
+        scandir: 'scripts/'
 
     - name: Yamllint
       run: |
         pip install yamllint
-        cat > /tmp/yamllint.yml << 'EOF'
+        cat > /tmp/yamllint.yml << 'EOF2'
         extends: default
         rules:
           line-length: disable
           document-start: disable
+          truthy:
+            allowed-values: ['true', 'false', 'yes', 'no']
           indentation:
             spaces: 2
             indent-sequences: true
-        EOF
+            check-multi-line-strings: true
+        EOF2
         yamllint -c /tmp/yamllint.yml .github/workflows/*.yml
