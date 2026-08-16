@@ -9,28 +9,53 @@ Pre-configured Rust Desk client packages for connecting to `rd.wickedyoda.com`
 curl -s https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/scripts/install-linux.sh | bash
 ```
 
-### Windows
-Download `rustdesk-client-windows.exe` from releases and install with pre-configured settings.
-
-### macOS
+Or download directly from `/clients/`:
 ```bash
-# Download the AppImage or use Homebrew
-brew install --cask rustdesk
-# Configuration is applied automatically
+curl -L https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/rustdesk-wickedyoda-linux-x86_64.AppImage -o rustdesk && chmod +x rustdesk && ./rustdesk
 ```
 
+### Windows
+Download `rustdesk-wickedyoda-windows-x86_64.exe` from the [`/clients/` directory](https://github.com/WickedYoda/rustdesk-client/tree/main/clients) and install with pre-configured settings.
+
+### macOS
+Download `rustdesk-wickedyoda-macos-aarch64.dmg` from the [`/clients/` directory](https://github.com/WickedYoda/rustdesk-client/tree/main/clients):
+
+```bash
+# Download and mount
+curl -L https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/rustdesk-wickedyoda-macos-aarch64.dmg -o rustdesk.dmg
+open rustdesk.dmg
+```
+
+## Available Clients
+
+All pre-built clients are available in the [`/clients/` directory](https://github.com/WickedYoda/rustdesk-client/tree/main/clients):
+
+| Platform | File |
+|----------|------|
+| Linux x86_64 | `rustdesk-wickedyoda-linux-x86_64.AppImage` |
+| Linux aarch64 | `rustdesk-wickedyoda-linux-aarch64.AppImage` |
+| Windows x86_64 | `rustdesk-wickedyoda-windows-x86_64.exe` |
+| macOS arm64 | `rustdesk-wickedyoda-macos-aarch64.dmg` |
+
 ## Server Details
+
 - **ID Server**: `rd.wickedyoda.com:21115`
-- **Relay Server**: `rd.wickedyoda.com:21116` 
+- **Relay Server**: `rd.wickedyoda.com:21116`
 - **API Server**: `rd.wickedyoda.com:21117`
 - **Key**: `vBWa4z9UmOgwMeuvDwzwE05+S8K4U6UBrr3nlENUa6A=`
 - **Encrypted**: Yes
 
 ## Configuration Files
+
 - `local.json` - Rust Desk client configuration
-- `installer.sh` - Linux installation script
-- `setup.ps1` - Windows PowerShell setup script
-- `install.sh` - macOS installation script
+- `scripts/install-linux.sh` - Linux installation script
+- `scripts/setup-windows.ps1` - Windows PowerShell setup script
+- `scripts/install-macos.sh` - macOS installation script
 
 ## GitHub Actions
-This repository uses GitHub Actions to automatically build client packages on every release.
+
+This repository uses GitHub Actions to automatically build and publish client packages:
+
+- **Build**: Pre-built clients are published to `/clients/` on every push to `main`
+- **CI Validation**: Code quality checks (yambl, shellcheck)
+- **Security Scan**: Trivy vulnerability scanning, Gitleaks secrets detection

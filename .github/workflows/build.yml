@@ -151,6 +151,20 @@ jobs:
           done
           ls -la clients/
 
+      - name: Determine next version
+        id: version
+        shell: bash
+        run: |
+          LATEST=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || echo "")
+          if [ -z "$LATEST" ] || [ "$LATEST" = "null" ]; then
+            echo "version=1.0" >> $GITHUB_OUTPUT
+          else
+            BASE=$(echo "$LATEST" | sed 's/^v//')
+            NEW_VERSION=$(python3 -c "v='$BASE'.split('.'); major=int(v[0]); minor=int(v[1]) if len(v)>1 else 0; print(f'{major}.{minor+1}')")
+            echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          fi
+          echo "Next version: ${{ steps.version.outputs.version }}"
+
       - name: Commit clients to repository
         shell: bash
         run: |
@@ -161,18 +175,21 @@ jobs:
           git commit -m "Add pre-built client packages via CI" || echo "No changes"
           git push || echo "Push may need PR due to branch protection"
 
+      - name: Create Release on Push
+        if: github.event_name == 'push'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${VERSION}"
+          name: "Client Build v${VERSION}"
+          generate_release_notes: true
+          files: clients/*
+          fail_on_unmatched_files: false
+
       - name: Upload consolidated artifact
         uses: actions/upload-artifact@v7
         with:
           name: all-clients
           path: clients/
           if-no-files-found: warn
-
-      - name: Create Release
-        if: github.event_name == 'workflow_dispatch'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: "v$(date +%Y%m%d)"
-          name: "Client Build $(date +%Y-%m-%d)"
-          generate_release_notes: true
-          files: clients/*
