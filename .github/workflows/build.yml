@@ -143,12 +143,13 @@ jobs:
 
     - name: Commit client binary
       if: github.event_name != 'schedule' || matrix.label == 'linux-x86_64'
+      shell: bash
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
         git add clients/
         git commit -m "Update pre-built client: ${{ matrix.label }} (build ${GITHUB_SHA::8})" || echo "No changes to commit"
-        git push || echo "Nothing to push"
+        git push origin HEAD:${{ github.ref }} || echo "Nothing to push"
 
   consolidate:
     needs: build
