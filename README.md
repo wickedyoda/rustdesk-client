@@ -32,17 +32,19 @@ All pre-built clients are available in the [`/clients/` directory](https://githu
 
 | Platform | File | SHA256 |
 |----------|------|--------|
-| Linux x86_64 | `rustdesk-wickedyoda-linux-x86_64.AppImage` | See `/clients/SHA256SUMS` |
-| Linux aarch64 | `rustdesk-wickedyoda-linux-aarch64.AppImage` | See `/clients/SHA256SUMS` |
-| Windows x86_64 | `rustdesk-wickedyoda-windows-x86_64.exe` | See `/clients/SHA256SUMS` |
-| macOS arm64 | `rustdesk-wickedyoda-macos-aarch64.dmg` | See `/clients/SHA256SUMS` |
+| Linux x86_64 | `rustdesk-wickedyoda-linux-x86_64.AppImage` | See [`/clients/SHA256SUMS`](https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/SHA256SUMS) |
+| Linux aarch64 | `rustdesk-wickedyoda-linux-aarch64.AppImage` | See [`/clients/SHA256SUMS`](https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/SHA256SUMS) |
+| Windows x86_64 | `rustdesk-wickedyoda-windows-x86_64.exe` | See [`/clients/SHA256SUMS`](https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/SHA256SUMS) |
+| macOS arm64 | `rustdesk-wickedyoda-macos-aarch64.dmg` | See [`/clients/SHA256SUMS`](https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/SHA256SUMS) |
 
 ### Verify Downloads
 
+Download and verify checksums:
+
 ```bash
-# Download and verify
-curl -L https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/rustdesk-wickedyoda-linux-x86_64.AppImage -o rustdesk
+# Download all files
 curl -L https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/SHA256SUMS -o SHA256SUMS
+curl -L https://raw.githubusercontent.com/WickedYoda/rustdesk-client/main/clients/rustdesk-wickedyoda-linux-x86_64.AppImage -o rustdesk-wickedyoda-linux-x86_64.AppImage
 
 # Verify the hash
 sha256sum -c SHA256SUMS --ignore-missing
