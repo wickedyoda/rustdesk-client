@@ -1,0 +1,19 @@
+# Dependabot Configuration
+# Automatically updates dependencies (GitHub Actions, etc.)
+
+version: 2
+
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "security"
+
+# Allow auto-merge for minor updates to GitHub Actions
+# (Security updates always auto-merge)

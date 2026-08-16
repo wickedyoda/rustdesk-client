@@ -1,0 +1,18 @@
+# CODEOWNERS
+# Defines who owns what parts of the codebase
+
+# Default owners for entire repository
+*                @wickedyoda
+
+# Scripts directory
+/scripts/        @wickedyoda
+
+# Configuration files
+local.json       @wickedyoda
+/.github/        @wickedyoda
+
+# Documentation
+*.md             @wickedyoda
+SECURITY.md      @wickedyoda
+CODE_OF_CONDUCT.md @wickedyoda
+CONTRIBUTING.md @wickedyoda

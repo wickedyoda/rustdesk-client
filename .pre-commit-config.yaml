@@ -1,0 +1,60 @@
+# Pre-commit Hooks
+# Install with: pip install pre-commit && pre-commit install
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--file-only, .github/workflows]
+      - id: check-json
+      - id: check-added-large-files
+        args: [--maxkb=5000]
+      - id: debug-tester
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: detect-aws-credential
+        args: [--allow-missing-credentials]
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0
+    hooks:
+      - id: shellcheck
+        files: ^scripts/.*\.sh$
+        args: [--severity=warning]
+
+  - repo: https://github.com/codespell-project/codespell
+    rev: v24.1.2
+    hooks:
+      - id: codespell
+        files: \.(md|txt|sh|ps1\|json)$
+        args: []
+
+  - repo: https://github.com/prettier/pre-commit-hooks
+    rev: 1.2.0
+    hooks:
+      - id: prettier
+        files: \.md$
+        additional_dependencies: [prettier@3.3.2]
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        files: ^.github/workflows/.*\.ya?ml$
+        args: [--strict]
+
+  - repo: local
+    hooks:
+      - id: yamllint-workflows
+        name: yamllint workflows
+        entry: yamllint -c /dev/stdin .github/workflows/
+        language: system
+        files: \.ya?ml$
+        pass_filenames: false
+        require_serial: true
+        # Use yamllint with relaxed rules for GitHub Actions
+        # (line-length is disabled for workflow files)

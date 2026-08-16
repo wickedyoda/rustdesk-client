@@ -1,0 +1,5 @@
+# .python-version
+3.11.0
+
+# Pre-commit hooks managed by pre-commit
+.pre-commit-cache/

@@ -1,0 +1,5 @@
+[submodule "rustdesk-source"]
+	path = rustdesk-source
+	url = https://github.com/rustdesk/rustdesk.git
+	branch = main
+	shallow = true
