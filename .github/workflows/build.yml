@@ -116,7 +116,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: client-${{ matrix.label }}
-          path: clients/
+          path: clients/rustdesk-wickedyoda-${{ matrix.label }}.${{ matrix.ext }}
           if-no-files-found: warn
 
   consolidate:
