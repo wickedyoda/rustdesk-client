@@ -32,6 +32,10 @@ jobs:
             arch: arm64
             label: macos-aarch64
             ext: dmg
+          - os: macos-14
+            arch: x86_64
+            label: macos-x86_64
+            ext: dmg
 
     steps:
       - name: Checkout repository
@@ -175,7 +179,7 @@ jobs:
                   elif 'exe' in filename:
                       platform = "Windows x86_64"
                   elif 'dmg' in filename:
-                      platform = "macOS arm64"
+                      platform = "macOS arm64" if 'aarch64' in filename else "macOS Intel"
                   else:
                       platform = filename
                   short_hash = hash_val[:16]
@@ -189,7 +193,7 @@ jobs:
           )
 
           if new_readme == readme:
-              print("README pattern match failed, trying alternative")
+              print("README pattern match failed")
           else:
               with open('README.md', 'w') as f:
                   f.write(new_readme)
