@@ -57,88 +57,57 @@ jobs:
         echo "Latest Rust Desk release: $TAG"
         echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-    - name: Download client for Linux
-      if: startsWith(matrix.os, 'ubuntu')
+    - name: Download Rust Desk client
       env:
         TAG: ${{ steps.release.outputs.tag }}
         ARCH: ${{ matrix.arch }}
         LABEL: ${{ matrix.label }}
         EXT: ${{ matrix.ext }}
+        OS_FAMILY: ${{ matrix.os }}
       shell: bash
       run: |
         OUTPUT_FILE="rustdesk-wickedyoda-${LABEL}.${EXT}"
-        URL="https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ARCH}.${EXT}"
-        echo "Downloading: $URL"
-        curl -L "$URL" -o "dist/$OUTPUT_FILE"
-        if [ -f "dist/$OUTPUT_FILE" ]; then
-          FILESIZE=$(wc -c < "dist/$OUTPUT_FILE" | tr -d ' ')
-          if [ "$FILESIZE" -gt 1000 ]; then
-            echo "Downloaded: $OUTPUT_FILE ($FILESIZE bytes)"
-            cp "dist/$OUTPUT_FILE" "clients/$OUTPUT_FILE"
-          else
-            echo "::warning::File too small ($FILESIZE bytes)"
-            rm -f "dist/$OUTPUT_FILE"
-          fi
-        fi
-
-    - name: Download client for Windows
-      if: startsWith(matrix.os, 'windows')
-      env:
-        TAG: ${{ steps.release.outputs.tag }}
-        ARCH: ${{ matrix.arch }}
-        LABEL: ${{ matrix.label }}
-        EXT: ${{ matrix.ext }}
-      shell: bash
-      run: |
-        OUTPUT_FILE="rustdesk-wickedyoda-${LABEL}.${EXT}"
-        URL="https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ARCH}.${EXT}"
-        echo "Downloading: $URL"
-        curl -L "$URL" -o "dist/$OUTPUT_FILE"
-        if [ -f "dist/$OUTPUT_FILE" ]; then
-          FILESIZE=$(wc -c < "dist/$OUTPUT_FILE" | tr -d ' ')
-          if [ "$FILESIZE" -gt 1000 ]; then
-            echo "Downloaded: $OUTPUT_FILE ($FILESIZE bytes)"
-            cp "dist/$OUTPUT_FILE" "clients/$OUTPUT_FILE"
-          else
-            echo "::warning::File too small ($FILESIZE bytes)"
-            rm -f "dist/$OUTPUT_FILE"
-          fi
-        fi
-
-    - name: Download client for macOS
-      if: startsWith(matrix.os, 'macos')
-      env:
-        TAG: ${{ steps.release.outputs.tag }}
-        ARCH: ${{ matrix.arch }}
-        LABEL: ${{ matrix.label }}
-        EXT: ${{ matrix.ext }}
-      shell: bash
-      run: |
-        OUTPUT_FILE="rustdesk-wickedyoda-${LABEL}.${EXT}"
-        
-        # Map arch names for asset URLs
         ASSET_ARCH=$ARCH
         if [ "$ARCH" = "arm64" ]; then
           ASSET_ARCH="aarch64"
         fi
-        
-        URLs=(
-          "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ASSET_ARCH}.${EXT}"
-          "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${ASSET_ARCH}.${EXT}"
-        )
-        
-        for try_url in "${URLs[@]}"; do
+
+        case "$OS_FAMILY" in
+          ubuntu*)
+            URLS=(
+              "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ARCH}.${EXT}"
+              "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${ARCH}.${EXT}"
+            )
+            ;;
+          windows*)
+            URLS=(
+              "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ARCH}.${EXT}"
+              "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-x86_64.${EXT}"
+            )
+            ;;
+          macos*)
+            URLS=(
+              "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ASSET_ARCH}.${EXT}"
+              "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${ASSET_ARCH}.${EXT}"
+            )
+            ;;
+        esac
+
+        for try_url in "${URLS[@]}"; do
           echo "Trying: $try_url"
-          if curl -sf -L "$try_url" -o "dist/$OUTPUT_FILE"; then
+          if curl -sfL "$try_url" -o "dist/$OUTPUT_FILE"; then
             FILESIZE=$(wc -c < "dist/$OUTPUT_FILE" | tr -d ' ')
             if [ "$FILESIZE" -gt 1000 ]; then
-              echo "Downloaded successfully from: $try_url ($FILESIZE bytes)"
+              echo "Downloaded: $try_url ($FILESIZE bytes)"
               cp "dist/$OUTPUT_FILE" "clients/$OUTPUT_FILE"
               break
+            else
+              echo "::warning::File too small: $try_url"
+              rm -f "dist/$OUTPUT_FILE"
             fi
           fi
         done
-        
+
         if [ ! -f "clients/$OUTPUT_FILE" ]; then
           echo "::warning::Failed to download for $LABEL"
         fi
@@ -149,16 +118,6 @@ jobs:
         name: client-${{ matrix.label }}
         path: clients/
         if-no-files-found: warn
-
-    - name: Commit client binary
-      if: github.event_name != 'schedule' || matrix.label == 'linux-x86_64'
-      shell: bash
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add clients/
-        git commit -m "Update pre-built client: ${{ matrix.label }} (build ${GITHUB_SHA::8})" || echo "No changes to commit"
-        git push origin HEAD:${{ github.ref }} || echo "Nothing to push"
 
   consolidate:
     needs: build
@@ -173,35 +132,43 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: List all client packages
-        run: |
-          echo "=== Pre-built clients ==="
-          ls -la clients/ 2>/dev/null || echo "No clients found"
-
-      - name: Download all artifacts
+      - name: Download all client artifacts
         uses: actions/download-artifact@v4
         with:
           path: all-clients
-          
-      - name: Assemble consolidated clients directory
+
+      - name: Assemble clients directory
         run: |
-          mkdir -p _site/clients
+          mkdir -p clients
           for dir in all-clients/client-*/; do
             if [ -d "$dir" ]; then
-              cp "$dir"/* _site/clients/ 2>/dev/null || true
+              cp "$dir"/* clients/ 2>/dev/null || true
             fi
           done
-          ls -la _site/clients/
+          ls -la clients/
+
+      - name: Commit clients to repository
+        shell: bash
+        run: |
+          rm -f clients/.gitkeep
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add clients/
+          git commit -m "Add pre-built client packages via CI" || echo "No changes"
+          git push || echo "Push may need PR due to branch protection"
 
       - name: Upload consolidated artifact
         uses: actions/upload-artifact@v7
         with:
           name: all-clients
-          path: _site/clients/
+          path: clients/
           if-no-files-found: warn
 
       - name: Create Release
-        if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
+        if: github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
-          files: _site/clients/*
+          tag_name: "v$(date +%Y%m%d)"
+          name: "Client Build $(date +%Y-%m-%d)"
+          generate_release_notes: true
+          files: clients/*
