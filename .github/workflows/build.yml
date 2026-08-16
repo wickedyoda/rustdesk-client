@@ -42,7 +42,10 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Create directories
-      run: mkdir -p clients dist
+      run: |
+        if [ ! -d clients ]; then mkdir clients; fi
+        if [ ! -d dist ]; then mkdir dist; fi
+      shell: bash
 
     - name: Copy configuration
       run: cp local.json dist/local.json
@@ -50,108 +53,84 @@ jobs:
     - name: Get latest Rust Desk release tag
       id: release
       run: |
-        # Fetch latest release tag
         TAG=$(curl -s "https://api.github.com/repos/rustdesk/rustdesk/releases/latest" | grep -o '"tag_name": *"[^"]*"' | head -1 | sed 's/"tag_name": *"\([^"]*\)"/\1/')
         if [ -z "$TAG" ]; then
-          # Fallback to known releases
           TAG="1.3.3"
         fi
         echo "Latest release: $TAG"
         echo "tag=$TAG" >> $GITHUB_OUTPUT
 
-    - name: Get asset download URLs
-      id: assets
-      run: |
-        TAG="${{ steps.release.outputs.tag }}"
-        
-        # Common patterns for Rust Desk releases
-        case "${{ matrix.os }}" in
-          ubuntu-*|windows-*)
-            # Linux and Windows use predictable naming
-            ARCH="${{ matrix.arch }}"
-            case "${{ matrix.ext }}" in
-              AppImage)
-                echo "url=https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ARCH}.AppImage" >> $GITHUB_OUTPUT
-                ;;
-              exe)
-                echo "url=https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ARCH}.exe" >> $GITHUB_OUTPUT
-                ;;
-            esac
-            ;;
-          macos-*)
-            # macOS downloads need to be discovered from release assets
-            ASSETS_URL="https://api.github.com/repos/rustdesk/rustdesk/releases/download/${TAG}"
-            ARCH="${{ matrix.arch }}"
-            
-            # Try different naming patterns for macOS
-            for pattern in "${TAG}-${ARCH}.dmg" "${ARCH}.dmg" "aarch64.dmg" "arm64.dmg"; do
-              URL="${ASSETS_URL}/${pattern}"
-              echo "Trying: $URL"
-              if curl -sf -L "$URL" -o /dev/null; then
-                echo "url=$URL" >> $GITHUB_OUTPUT
-                break
-              fi
-            done
-            ;;
-        esac
-        
-        # If no URL found, try listing all assets
-        if [ -z "${{ steps.assets.outputs.url }}" ]; then
-          echo "url=" >> $GITHUB_OUTPUT
-        fi
-
-    - name: Download Rust Desk client
+    - name: Download Rust Desk client for Linux
+      if: matrix.os == 'ubuntu-22.04'
       env:
-        DOWNLOAD_URL: "${{ steps.assets.outputs.url }}"
-        RELEASE_TAG: "${{ steps.release.outputs.tag }}"
-        LABEL: "${{ matrix.label }}"
-        EXT: "${{ matrix.ext }}"
+        TAG: ${{ steps.release.outputs.tag }}
+        ARCH: ${{ matrix.arch }}
+        LABEL: ${{ matrix.label }}
+        EXT: ${{ matrix.ext }}
+      shell: bash
       run: |
         OUTPUT_FILE="rustdesk-wickedyoda-${LABEL}.${EXT}"
-        
-        if [ -n "$DOWNLOAD_URL" ]; then
-          echo "Downloading from: $DOWNLOAD_URL"
-          curl -L "$DOWNLOAD_URL" -o "dist/$OUTPUT_FILE" || echo "Download failed"
-        else
-          # Fallback: try known good URLs
-          TAG="$RELEASE_TAG"
-          ARCH="${{ matrix.arch }}"
-          
-          case "$LABEL" in
-            linux-*)
-              curl -L "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ARCH}.AppImage" -o "dist/$OUTPUT_FILE" || echo "Download failed"
-              ;;
-            windows-*)
-              curl -L "https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ARCH}.exe" -o "dist/$OUTPUT_FILE" || echo "Download failed"
-              ;;
-            macos-*)
-              # Try alternate patterns
-              for patt in "${TAG}-${ARCH}" "${ARCH}" "aarch64" "arm64" "x86_64"; do
-                for ext in dmg pkg; do
-                  URL="https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${patt}.${ext}"
-                  if curl -sf -L "$URL" -o "dist/$OUTPUT_FILE"; then
-                    echo "Found: $URL"
-                    break 2
-                  fi
-                done
-              done
-              ;;
-          esac
-        fi
-
-        # Verify download
+        URL="https://github.com/rustdesk/rustdesk/releases/download/${TAG}/rustdesk-${TAG}-${ARCH}.${EXT}"
+        echo "Downloading: $URL"
+        curl -L "$URL" -o "dist/$OUTPUT_FILE"
         if [ -f "dist/$OUTPUT_FILE" ]; then
-          FILESIZE=$(wc -c < "dist/$OUTPUT_FILE" | tr -d ' ')
+          FILESIZE=$(stat -c%s "dist/$OUTPUT_FILE" 2>/dev/null || echo 0)
           if [ "$FILESIZE" -gt 1000 ]; then
             echo "Downloaded: $OUTPUT_FILE ($FILESIZE bytes)"
             cp "dist/$OUTPUT_FILE" "clients/$OUTPUT_FILE"
           else
-            echo "::warning::File too small ($FILESIZE bytes) - download may have failed"
-            echo "Removing invalid file"
+            echo "::warning::File too small ($FILESIZE bytes)"
             rm -f "dist/$OUTPUT_FILE"
           fi
+        fi
+
+    - name: Download Rust Desk client for Windows
+      if: matrix.os == 'windows-latest'
+      env:
+        TAG: ${{ steps.release.outputs.tag }}
+        ARCH: ${{ matrix.arch }}
+        LABEL: ${{ matrix.label }}
+        EXT: ${{ matrix.ext }}
+      shell: cmd
+      run: |
+        set OUTPUT_FILE=rustdesk-wickedyoda-%LABEL%.%EXT%
+        set URL=https://github.com/rustdesk/rustdesk/releases/download/%TAG%/rustdesk-%TAG%-%ARCH%.%EXT%
+        echo Downloading: %URL%
+        powershell -Command "Invoke-WebRequest -Uri '%URL%' -OutFile dist\\%OUTPUT_FILE%"
+        if exist dist\%OUTPUT_FILE% (
+          echo Download complete
+          copy dist\%OUTPUT_FILE% clients\\%OUTPUT_FILE%
+        ) else (
+          echo ::warning::Download failed
+        )
+
+    - name: Download Rust Desk client for macOS
+      if: matrix.os == 'macos-*'
+      env:
+        TAG: ${{ steps.release.outputs.tag }}
+        ARCH: ${{ matrix.arch }}
+        LABEL: ${{ matrix.label }}
+        EXT: ${{ matrix.ext }}
+      shell: bash
+      run: |
+        OUTPUT_FILE="rustdesk-wickedyoda-${LABEL}.${EXT}"
+        ASSETS_URL="https://api.github.com/repos/rustdesk/rustdesk/releases/download/${TAG}"
+        
+        # Try to discover actual asset name
+        URL=""
+        for pattern in "${TAG}-${ARCH}" "${ARCH}" "aarch64" "arm64" "x86_64"; do
+          TRY_URL="${ASSETS_URL}/rustdesk-${pattern}.${EXT}"
+          if curl -sf -L "$TRY_URL" -o "dist/$OUTPUT_FILE"; then
+            URL="$TRY_URL"
+            break
+          fi
+        done
+        
+        if [ -n "$URL" ]; then
+          echo "Downloaded from: $URL"
+          cp "dist/$OUTPUT_FILE" "clients/$OUTPUT_FILE"
         else
-          echo "::warning::Failed to download client for $LABEL"
+          echo "::warning::Failed to download for $LABEL"
         fi
 
     - name: Upload client artifact
