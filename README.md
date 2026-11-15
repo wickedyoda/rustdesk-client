@@ -36,11 +36,11 @@ All pre-built clients are available in the [`/clients/` directory](https://githu
 
 | Platform | File | SHA256 (first 16 chars) |
 |----------|------|------------------------|
-| Linux aarch64 | `rustdesk-wickedyoda-linux-aarch64.AppImage` | `47c1be6f26ee2611` |
-| Linux x86_64 | `rustdesk-wickedyoda-linux-x86_64.AppImage` | `bb8b7ccb3f50a201` |
+| Linux aarch64 | `rustdesk-wickedyoda-linux-aarch64.AppImage` | `924c8dee36cbd787` |
+| Linux x86_64 | `rustdesk-wickedyoda-linux-x86_64.AppImage` | `ff7fff208fed218f` |
 | macOS arm64 | `rustdesk-wickedyoda-macos-aarch64.dmg` | `3929b0a4321e7d0f` |
 | macOS Intel | `rustdesk-wickedyoda-macos-x86_64.dmg` | `1ca3cbfbe7f2bd28` |
-| Windows x86_64 | `rustdesk-wickedyoda-windows-x86_64.exe` | `319206042390ebfc` |
+| Windows x86_64 | `rustdesk-wickedyoda-windows-x86_64.exe` | `523ba0efbf62a217` |
 ### Verify Downloads
 
 ```bash
